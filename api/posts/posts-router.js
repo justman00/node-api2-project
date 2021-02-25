@@ -32,8 +32,6 @@ router.get("/:id", (req, res) => {
     });
 });
 
-router.get("/:id/comments", (req, res) => {});
-
 router.post("/", (req, res) => {
   if (!req.body.title || !req.body.contents) {
     return res.status(400).json({
@@ -92,6 +90,57 @@ router.delete("/:id", (req, res) => {
         message: "The post with the specified ID does not exist",
       });
   });
+});
+
+router.post("/:id", (req, res) => {
+  if (!req.body.text) {
+    return res.status(400).json({
+      message: "Please leave a comment before apply",
+    });
+  } else
+    Posts.insertComment(req.body)
+      .then((comment) => {
+        res.status(201).json(comment);
+      })
+      .catch((error) => {
+        res.status(500).json({
+          message: "Something went wrong",
+        });
+      });
+});
+
+router.get("/:id/comments", (req, res) => {
+  Posts.findPostComments(req.params.id)
+    .then((comment) => {
+      if (comment) {
+        res.status(200).json(comment);
+      } else
+        res.status(404).json({
+          message: "The comment with the specified ID does not exist",
+        });
+    })
+    .catch((error) => {
+      res.status(500).json({
+        message: "The comment information could not be retrieved",
+      });
+    });
+});
+
+router.get("/:id/comments/:id", (req, res) => {
+  Posts.findCommentById(req.params.id)
+    .then((commentId) => {
+      if (commentId) {
+        res.status(200).json(commentId);
+      } else
+        res.status(404).json({
+          message: "The comment with the specified ID does not exist",
+        });
+    })
+    .catch((error) => {
+      res.status(500).json({
+        message: "The comment information could not be retrieved",
+      });
+    });
 });
 
 module.exports = router;
