@@ -34,7 +34,7 @@ router.get("/:id", (req, res) => {
     .catch((err) => {
       res
         .status(500)
-        .json({ msg: "he post information could not be retrieved" });
+        .json({ msg: "The post information could not be retrieved" });
     });
 });
 
@@ -61,21 +61,22 @@ router.post("/", (req, res) => {
 //Update the post with the specified id using data from the request body and return the modified document, not the original
 
 router.put("/:id", (req, res) => {
-  const post = req.body;
+  if (!req.body.title || !req.body.contents) {
+    return res
+      .status(400)
+      .json({ msg: "Please provide title and contents for the post" });
+  }
+  Post.findById(req.params.id).then((post) => {
+    if (!post) {
+      return res
+        .status(404)
+        .json({ msg: "The post with the specified ID does not exist" });
+    }
+  });
 
-  Post.update(req.params.id, post)
+  Post.update(req.params.id, req.body)
     .then((updatedPost) => {
-      if (!post) {
-        res
-          .status(404)
-          .json({ msg: "The post with the specified ID does not exist" });
-      } else if (!req.body.title || !req.body.contents) {
-        res
-          .status(400)
-          .json({ msg: "Please provide title and contents for the post" });
-      } else {
-        res.status(200).json(updatedPost);
-      }
+      res.status(200).json({ updatedPost });
     })
     .catch((err) => {
       res
@@ -100,19 +101,18 @@ router.delete("/:id", (req, res) => {
 
 router.get("/:id/comments", async (req, res) => {
   const post = await Post.findById(req.params.id);
+  if (!post) {
+    return res
+      .status(404)
+      .json({ msg: "The post with the specified ID does not exist" });
+  }
 
   Post.findPostComments(req.params.id)
     .then((comments) => {
-      if (!post) {
-        res
-          .status(404)
-          .json({ msg: "The post with the specified ID does not exist" });
-      }
       if (comments.length === 0) {
         res.status(404).json({ msg: "No comments for this post" });
-      } else {
-        res.status(200).json(comments);
       }
+      res.status(200).json(comments);
     })
     .catch((err) => {
       res
